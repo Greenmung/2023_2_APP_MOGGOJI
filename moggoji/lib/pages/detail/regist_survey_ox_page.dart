@@ -1,6 +1,13 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:moggoji/common/bottom_navi_bar.dart';
-import 'package:moggoji/pages/detail/submit_survey_ox_page.dart';
+import 'package:moggoji/items/show_alert_dialog_fill_out.dart';
+
+import 'package:moggoji/pages/survey_page.dart';
+import '../../models/survey.dart';
+import '../../service/globals.dart';
 
 class RegistSurveyOxPage extends StatefulWidget {
   const RegistSurveyOxPage({super.key});
@@ -10,6 +17,57 @@ class RegistSurveyOxPage extends StatefulWidget {
 }
 
 class _RegistSurveyOxPageState extends State<RegistSurveyOxPage> {
+  final _registNoteKey = GlobalKey<FormState>();
+
+  Survey survey = Survey(
+      surveyNumber: 0,
+      surveyTitle: '',
+      surveyType: 0,
+      surveyCreator: 'sonny',
+      content1: '',
+      content2: '',
+      content3: '',
+      content4: '',
+      content5: '',
+      content6: '',
+      content7: '',
+      content8: '',
+      content9: '',
+      content10: '',
+      content11: '',
+      content12: '',
+      content13: '',
+      content14: '',
+      content15: '');
+
+  Future save() async {
+    var res = await http.post(Uri.parse(addSurvey),
+        headers: headers,
+        body: json.encode({
+          'surveyNumber': survey.surveyNumber,
+          'surveyTitle': survey.surveyTitle,
+          'surveyType': survey.surveyType,
+          'surveyCreator': survey.surveyCreator,
+          'content1': survey.content1,
+          'content2': survey.content2,
+          'content3': survey.content3,
+          'content4': survey.content4,
+          'content5': survey.content5,
+          'content6': survey.content6,
+          'content7': survey.content7,
+          'content8': survey.content8,
+          'content9': survey.content9,
+          'content10': survey.content10,
+          'content11': survey.content11,
+          'content12': survey.content12,
+          'content13': survey.content13,
+          'content14': survey.content14,
+          'content15': survey.content15,
+        }));
+
+    print(res.body);
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -29,7 +87,8 @@ class _RegistSurveyOxPageState extends State<RegistSurveyOxPage> {
                 onPressed: ()=>(
                     showDialog(context: context, builder: (context){
                       return AlertDialog(
-                        content: Text("작성하신 제목을 등록하시겠습니까?"),
+                        title: Text("설문 등록"),
+                        content: Text("작성하신 설문 제목을 등록하시겠습니까?"),
                         actions: <Widget>[
                           TextButton(
                               onPressed: ()=>Navigator.pop(context, 'Cancel'),
@@ -37,7 +96,20 @@ class _RegistSurveyOxPageState extends State<RegistSurveyOxPage> {
                           ),
                           TextButton(
                               onPressed: (){
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => SurveyOx()));
+                                if(survey.surveyTitle == '') {
+                                  Navigator.pop(context);
+                                  showDialog(context: context, builder: (context){
+                                    return ShowAlertDialogFillOut(
+                                        title:"미입력!!",
+                                        content: "제목을 입력해주세요!"
+                                    );
+                                  });
+                                } else {
+                                  survey.surveyType = 1;
+                                  save();
+                                  Navigator.push(context,
+                                      MaterialPageRoute(builder: (context)=>SurveyPage()));
+                                }
                           },
                               child: Text("등록")
                           )
@@ -53,7 +125,13 @@ class _RegistSurveyOxPageState extends State<RegistSurveyOxPage> {
         body: Padding(
           padding: const EdgeInsets.all(14.0),
           child: Form(
+            key: _registNoteKey,
             child: TextFormField(
+              onChanged: (value) {
+                setState(() {
+                  survey.surveyTitle = value;
+                });
+              },
               decoration: InputDecoration(
                 labelText: "설문제목",
                 hintText: "ex) 만족도"

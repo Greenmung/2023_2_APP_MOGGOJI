@@ -1,13 +1,11 @@
-import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-import 'package:http/http.dart' as http;
+import 'package:moggoji/service/imagePickerService.dart';
+import 'package:moggoji/service/jwtTokenUnit.dart';
 
 import '../common/bottom_navi_bar.dart';
-import 'package:moggoji/models/user.dart';
-
-import '../service/globals.dart';
 
 class MorePage extends StatefulWidget {
   const MorePage({super.key});
@@ -17,55 +15,41 @@ class MorePage extends StatefulWidget {
 }
 
 class _MorePageState extends State<MorePage> {
-  List<User> user = [];
   Color myBackgroundColor = Color.fromRGBO(244, 247, 253, 1.0);
 
-  // 로그인 구현 전 테스트 용도로 사용할 이메일 값.
-  String email = "test@test.com";
+  int userNumber = 0;
+  String userId = '';
+  String userEmail = '';
+  String userName = '';
+  String userGender = '';
+  int userImgNumber = 0;
+  // int userAge = '';
 
+  Uint8List imageData = Uint8List.fromList([]);
   @override
   void initState() {
     super.initState();
-    // fetchOneUser(email);
+    fetchUserInfo();
   }
 
-  Future<List<User>> fetchOneUser(String email) async {
-    final response = await http.get(Uri.parse('$moreURL/$email'));
+  void fetchUserInfo() async {
+    JwtTokenUtil jwtTokenUtil = JwtTokenUtil();
+    await jwtTokenUtil.getUserInfo();
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      print(response.body);
-      return data.map((json) => User.fromMap(json)).toList();
-    } else {
-      print('Failed to load user data. Status Code: ${response.statusCode}');
-      throw Exception(
-          'Failed to load user data. Status Code: ${response.statusCode}');
-    }
+    setState(() {
+      userNumber = jwtTokenUtil.userNumber ?? 0;
+      userId = jwtTokenUtil.userId ?? "";
+      userEmail = jwtTokenUtil.userEmail ?? "";
+      userName = jwtTokenUtil.userName ?? "";
+      userGender = jwtTokenUtil.userGender ?? "";
+      userImgNumber = jwtTokenUtil.userImgNumber ?? 0;
+
+      imageData = jwtTokenUtil.imageDataList;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    String userEmail = '';
-    String userName = '';
-    String userPwd = '';
-    int userNumber = 0;
-
-    return FutureBuilder<List<User>>(
-      future: fetchOneUser(email),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
-        } else if (snapshot.hasError) {
-          return Text("Error ${snapshot.error}");
-        } else {
-          final users = snapshot.data;
-          if(users != null && users.isNotEmpty) {
-            final resultUser = users[0];
-            userEmail = resultUser.email;
-            userName = resultUser.id;
-            userPwd = resultUser.pwd;
-            userNumber = resultUser.number;
-          }
           return Scaffold(
             backgroundColor: myBackgroundColor,
             body: SafeArea(
@@ -86,27 +70,33 @@ class _MorePageState extends State<MorePage> {
                         child: Row(
                           mainAxisSize: MainAxisSize.max,
                           children: [
-                            Container(
-                              width: 72,
-                              height: 72,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.purple,
-                                  width: 2,
+                            GestureDetector(
+                              onTap: () {
+                                ImagePickerService service = ImagePickerService();
+                                service.pickImage(userId);
+                              },
+                              child: Container(
+                                width: 72,
+                                height: 72,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.purple,
+                                    width: 2,
+                                  ),
                                 ),
-                              ),
-                              child: Padding(
-                                padding:
-                                    EdgeInsetsDirectional.fromSTEB(2, 2, 2, 2),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(40),
-                                  child: Image.network(
-                                    'https://cdn.pixabay.com/photo/2017/01/10/03/54/avatar-1968236_1280.png',
-                                    width: 60,
-                                    height: 60,
-                                    fit: BoxFit.cover,
+                                child: Padding(
+                                  padding:
+                                      EdgeInsetsDirectional.fromSTEB(2, 2, 2, 2),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(40),
+                                    child: Image.memory(
+                                      imageData,
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -120,7 +110,7 @@ class _MorePageState extends State<MorePage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    userName,
+                                    userId,
                                     style: TextStyle(
                                         color: Colors.black,
                                         fontSize: 18,
@@ -309,7 +299,63 @@ class _MorePageState extends State<MorePage> {
             bottomNavigationBar: BottomNaviBar(),
           );
         }
-      },
-    );
-  }
 }
+
+// Future<void> fetchData() async {
+  // JwtTokenUtil jwtTokenUtil = JwtTokenUtil();
+  // String? token = await jwtTokenUtil.loadToken();
+  //
+  // print("========================== Token Test ==========================");
+  // print(token);
+  //
+  // // 2차 유효성 검사
+  // if (token != null) {
+  //   Map<String, String> headers = {
+  //     'Authorization': 'Bearer $token',
+  //     'Content-Type': 'application/json',
+  //   };
+  //
+  //   // token이 null이 아닐 때만 디코딩 수행
+  //   Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+  //   String userId = decodedToken["id"];
+  //   String userEmail = decodedToken["email"];
+  //   String userName = decodedToken["name"];
+  //   String userGender = decodedToken["gender"];
+  //   int userImgNumber = decodedToken["imageNumber"];
+  //   // String userAge = decodedToken["age"];
+  //   print("User ID : $userId");
+  //   print("User Email : $userEmail");
+  //   print("User Image Number : $userImgNumber");
+  //
+  //   setState(() {
+  //     this.userId = userId;
+  //     this.userEmail = userEmail;
+  //     this.userName = userName;
+  //     this.userGender = userGender;
+  //     this.userImgNumber = userImgNumber;
+  //     // this.userAge = userAge;
+  //   });
+  //
+  // } else {
+  //   // token이 null인 경우에 대한 처리
+  //   print("Token is null. Unable to decode.");
+  // }
+
+  // 이미지 불러오기
+  // String imgURL = '$imageDisplayURL/${userImgNumber}';
+  // print(imgURL);
+  //
+  // final response = await http.get(Uri.parse(imgURL));
+  //
+  // if (response.statusCode == 200) {
+  //   // 이미지 불러오기
+  //   Uint8List imageData = Uint8List.fromList(response.bodyBytes);
+  //   print(imageData.runtimeType);
+  //
+  //   setState(() {
+  //     this.test = imageData;
+  //   });
+  // } else {
+  //   throw Exception('Failed to load Image');
+  // }
+// }

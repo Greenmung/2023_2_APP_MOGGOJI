@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:moggoji/common/bottom_navi_bar.dart';
 import 'package:moggoji/items/show_dialog_regist_survey.dart';
+import 'package:moggoji/items/survey_listView.dart';
+import 'package:moggoji/items/survey_type_listView.dart';
 
 class SurveyPage extends StatefulWidget {
   const SurveyPage({super.key});
@@ -10,8 +12,8 @@ class SurveyPage extends StatefulWidget {
 }
 
 class _SurveyPageState extends State<SurveyPage> {
-  // TabBar Keyword
-  String documentName = 'a';
+
+  int surveyType = 0;
 
   @override
   void initState() {
@@ -21,6 +23,9 @@ class _SurveyPageState extends State<SurveyPage> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      onTap: (){
+        FocusScope.of(context).unfocus();
+      },
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
@@ -86,6 +91,7 @@ class _SurveyPageState extends State<SurveyPage> {
                           child: Padding(
                             padding: EdgeInsetsDirectional.fromSTEB(4, 0, 0, 0),
                             child: Container(
+                              margin: EdgeInsets.fromLTRB(0, 0, 8, 0),
                               width: 200,
                               child: TextFormField(
                                 obscureText: false,
@@ -139,15 +145,14 @@ class _SurveyPageState extends State<SurveyPage> {
                           onTap: (index) {
                             if(index == 0) {
                               setState(() {
-                                documentName = 'a';
                               });
                             } else if(index == 1) {
                               setState(() {
-                                documentName = 'b';
+                                surveyType = 1;
                               });
                             } else {
                               setState(() {
-                                documentName = 'c';
+                                surveyType = 2;
                               });
                             }
                           },
@@ -161,23 +166,23 @@ class _SurveyPageState extends State<SurveyPage> {
                           children: [
                             ListView.builder(
                               padding: EdgeInsets.zero,
-                              itemCount: 1, // 데이터 개수에 맞게 조정
+                              itemCount: 1,
                               itemBuilder: (context, index) {
-                                // return NoticeListView(documentName: documentName);
+                                return SurveyListView();
                               },
                             ),
                             ListView.builder(
                               padding: EdgeInsets.zero,
-                              itemCount: 1, // 데이터 개수에 맞게 조정
+                              itemCount: 1,
                               itemBuilder: (context, index) {
-                                // return NoticeListView(documentName: documentName);
+                                return SurveyTypeListView(surveyType: surveyType);
                               },
                             ),
                             ListView.builder(
                               padding: EdgeInsets.zero,
-                              itemCount: 1, // 데이터 개수에 맞게 조정
+                              itemCount: 1,
                               itemBuilder: (context, index) {
-                                // return NoticeListView(documentName: documentName);
+                                return SurveyTypeListView(surveyType: surveyType);
                               },
                             ),
                           ],

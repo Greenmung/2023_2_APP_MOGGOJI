@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:moggoji/models/user.dart';
+import 'package:moggoji/service/jwtTokenUnit.dart';
 import '../pages/main_screen.dart';
 import 'register_page.dart';
 import 'package:moggoji/service/globals.dart';
@@ -26,17 +27,59 @@ class _LoginState extends State<Login> {
   });
 
   Future login() async {
-    var res = await http.post(Uri.parse(loginURL),
-      headers: headers,
-      body: json.encode({'email':user.email, 'pwd': user.pwd}));
+    JwtTokenUtil jwtTokenUtil = JwtTokenUtil();
 
-    print(res.body);
+    var res = await http.post(Uri.parse(loginURL),
+        headers: headers, body: json.encode({'id': user.id, 'pwd': user.pwd}));
+
+    if (res.statusCode == 200) {
+      // 로그인 성공
+      // String token = json.decode(res.body);
+      String token = res.body;
+      // 토큰 저장
+      await jwtTokenUtil.saveToken(token);
+      print("============== TOKEN ==============");
+      print(token);
+
+      // 성공지 메인 페이지로 이동
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => MainScreen()));
+
+      return token;
+    } else {
+      // 로그인 실패
+      showLoginFailedDialog();
+      throw Exception("로그인 실패");
+    }
+  }
+
+  void showLoginFailedDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("로그인 실패"),
+          content: Text("아이디 또는 비밀번호가 잘못되었습니다."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("확인"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: GestureDetector(
+        onTap: (){
+          FocusScope.of(context).unfocus();
+        },
         child: Scaffold(
           backgroundColor: Colors.lightBlue,
           body: Form(
@@ -96,8 +139,8 @@ class _LoginState extends State<Login> {
                           child: Align(
                             alignment: AlignmentDirectional(0.00, 0.00),
                             child: Padding(
-                              padding:
-                              EdgeInsetsDirectional.fromSTEB(32, 32, 32, 32),
+                              padding: EdgeInsetsDirectional.fromSTEB(
+                                  32, 32, 32, 32),
                               child: Column(
                                 mainAxisSize: MainAxisSize.max,
                                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -118,18 +161,19 @@ class _LoginState extends State<Login> {
                                     ),
                                   ),
                                   Padding(
-                                    padding:
-                                    EdgeInsetsDirectional.fromSTEB(0, 0, 0, 16),
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        0, 0, 0, 16),
                                     child: SizedBox(
                                       width: double.infinity,
                                       child: TextFormField(
-                                        controller: TextEditingController(text: user.id),
+                                        controller: TextEditingController(
+                                            text: user.id),
                                         onChanged: (val) {
                                           user.id = val;
                                         },
                                         validator: (value) {
                                           if (value!.isEmpty) {
-                                            return "Email is Empty!";
+                                            return "ID is Empty!";
                                           }
                                           return "";
                                         },
@@ -137,19 +181,25 @@ class _LoginState extends State<Login> {
                                         autofillHints: [AutofillHints.email],
                                         obscureText: false,
                                         decoration: InputDecoration(
-                                          labelText: 'Email',
-                                        ),
-                                        keyboardType: TextInputType.emailAddress,
+                                            labelText: 'ID',
+                                            border: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black),
+                                            )),
+                                        keyboardType:
+                                            TextInputType.emailAddress,
                                       ),
                                     ),
                                   ),
                                   Padding(
-                                    padding:
-                                    EdgeInsetsDirectional.fromSTEB(0, 0, 0, 16),
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        0, 0, 0, 16),
                                     child: SizedBox(
                                       width: double.infinity,
                                       child: TextFormField(
-                                        controller: TextEditingController(text: user.pwd),
+                                        obscureText: true,
+                                        controller: TextEditingController(
+                                            text: user.pwd),
                                         onChanged: (val) {
                                           user.pwd = val;
                                         },
@@ -163,8 +213,11 @@ class _LoginState extends State<Login> {
                                         autofillHints: [AutofillHints.password],
                                         // obscureText: !_model.passwordVisibility,
                                         decoration: InputDecoration(
-                                          labelText: 'Password',
-                                        ),
+                                            labelText: 'Password',
+                                            border: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black),
+                                            )),
                                       ),
                                     ),
                                   ),
@@ -172,26 +225,35 @@ class _LoginState extends State<Login> {
                                       padding: EdgeInsetsDirectional.fromSTEB(
                                           0, 0, 0, 16),
                                       child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.white,
+                                            shadowColor: Colors.black,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            )),
                                         onPressed: () {
                                           try {
-                                            login();
                                             print("로그인 메서드 진입");
-
+                                            login();
                                           } catch (e) {
                                             print(e);
                                           }
-
-
-                                          Navigator.push(context, MaterialPageRoute(builder: (context) => MainScreen()));
                                         },
-                                        child: Text("Sign In"),
+                                        child: Text(
+                                          "Sign In",
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 15.3,
+                                          ),
+                                        ),
                                       )),
                                   Padding(
                                     padding: EdgeInsetsDirectional.fromSTEB(
                                         0, 12, 0, 12),
                                     child: RichText(
-                                      textScaleFactor:
-                                      MediaQuery.of(context).textScaleFactor,
+                                      textScaleFactor: MediaQuery.of(context)
+                                          .textScaleFactor,
                                       text: TextSpan(
                                         children: [
                                           TextSpan(
@@ -202,8 +264,14 @@ class _LoginState extends State<Login> {
                                           ),
                                           TextSpan(
                                               text: '여기를 눌러 회원가입',
-                                              recognizer: TapGestureRecognizer()..onTap = () => Navigator.push(context, MaterialPageRoute(builder: (context) => RegisterPage())),
-                                              style: TextStyle(color: Colors.purple))
+                                              recognizer: TapGestureRecognizer()
+                                                ..onTap = () => Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            RegisterPage())),
+                                              style: TextStyle(
+                                                  color: Colors.purple))
                                         ],
                                       ),
                                     ),
@@ -212,8 +280,7 @@ class _LoginState extends State<Login> {
                               ),
                             ),
                           ),
-                        )
-                    ),
+                        )),
                   ],
                 ),
               ),
@@ -224,7 +291,6 @@ class _LoginState extends State<Login> {
     );
   }
 }
-
 
 // List<User>? users;
 //

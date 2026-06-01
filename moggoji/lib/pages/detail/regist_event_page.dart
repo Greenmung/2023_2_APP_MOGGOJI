@@ -26,7 +26,8 @@ class _RegistEventPageState extends State<RegistEventPage> {
       location: '',
       date: '',
       content: '',
-      fee: 0);
+      fee: 0,
+      participantName: 'sonny');
 
   Future save() async {
     var res = await http.post(Uri.parse(addTask),
@@ -37,12 +38,13 @@ class _RegistEventPageState extends State<RegistEventPage> {
           'location': schedule.location,
           'date': schedule.date,
           'content': schedule.content,
-          'fee': schedule.fee
+          'fee': schedule.fee,
+          "participantName": schedule.participantName
         }));
 
     print(res.body);
   }
-
+  String eventCharge = "";
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -72,6 +74,7 @@ class _RegistEventPageState extends State<RegistEventPage> {
                               child: Text("취소")
                           ),
                           TextButton(onPressed: () {
+                            schedule.fee = int.tryParse(eventCharge)??0; // 문자열을 int로 변환한 후 실패하면 기본값을 0으로 설정
                             save();
                             Navigator.push(context, MaterialPageRoute(
                                 builder: (context) => EventPage()));
@@ -198,10 +201,9 @@ class _RegistEventPageState extends State<RegistEventPage> {
                           padding: const EdgeInsets.all(14.0),
                           child: TextFormField(
                             controller: TextEditingController(
-                                text: schedule.fee.toString()),
+                                text: eventCharge),
                             onChanged: (val) {
-                              schedule.fee = int.tryParse(val) ??
-                                  0; // 문자열을 int로 변환한 후 실패하면 기본값을 0으로 설정
+                              eventCharge = val;
                             },
                             validator: (value) {
                               if (value!.isEmpty) {
